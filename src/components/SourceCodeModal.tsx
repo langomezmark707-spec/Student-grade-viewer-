@@ -153,29 +153,47 @@ The application will automatically start and run!
     path: 'server.js',
     language: 'javascript',
     category: 'Setup & Config',
-    description: 'Production Node.js Express server configured for Render deployment',
+    description: 'Production Node.js Express server with auto-build guard for Render deployment',
     content: `import express from 'express';
 import path from 'path';
+import fs from 'fs';
+import { execSync } from 'child_process';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-// Render assigns the PORT automatically (defaults to 10000 on Render)
 const PORT = process.env.PORT || 3000;
 const distPath = path.join(__dirname, 'dist');
+const indexPath = path.join(distPath, 'index.html');
 
-app.use(express.static(distPath));
+// Auto-compile if dist folder was not built during deployment
+if (!fs.existsSync(indexPath)) {
+  console.log('⚠️ dist/index.html not found! Running build automatically...');
+  try {
+    const isBun = typeof process.versions.bun !== 'undefined' || fs.existsSync(path.join(__dirname, 'bun.lock'));
+    const buildCmd = isBun ? 'bun run build' : 'npm run build';
+    execSync(buildCmd, { stdio: 'inherit', cwd: __dirname });
+    console.log('✅ Auto-build completed successfully!');
+  } catch (err) {
+    console.error('❌ Build failed:', err);
+  }
+}
 
-// Health check endpoint for Render monitoring
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath));
+}
+
 app.get('/healthz', (req, res) => {
   res.status(200).json({ status: 'healthy', uptime: process.uptime() });
 });
 
-// Single Page Application (SPA) catch-all
 app.get('*', (req, res) => {
-  res.sendFile(path.join(distPath, 'index.html'));
+  if (fs.existsSync(indexPath)) {
+    return res.sendFile(indexPath);
+  }
+  res.status(503).send('Building application, please refresh in 3 seconds...');
 });
 
 app.listen(PORT, '0.0.0.0', () => {
