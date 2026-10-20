@@ -1,0 +1,6 @@
+{
+  "name": "Student Grade Viewer",
+  "description": "Fast and accurate student grade viewer with instant student ID search, real-time performance tracking, GPA calculation, subject breakdowns, and teacher grade management.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
