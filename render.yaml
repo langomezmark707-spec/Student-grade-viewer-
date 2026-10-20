@@ -1,0 +1,17 @@
+# Render Blueprint Configuration (render.yaml)
+# Connect your repository to Render, and it will automatically deploy with zero configuration!
+
+services:
+  # Option 1: Web Service (Node.js + Express server)
+  - type: web
+    name: student-grade-viewer
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000

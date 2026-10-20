@@ -149,6 +149,61 @@ The application will automatically start and run!
 }`,
   },
   {
+    name: 'server.js',
+    path: 'server.js',
+    language: 'javascript',
+    category: 'Setup & Config',
+    description: 'Production Node.js Express server configured for Render deployment',
+    content: `import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const app = express();
+// Render assigns the PORT automatically (defaults to 10000 on Render)
+const PORT = process.env.PORT || 3000;
+const distPath = path.join(__dirname, 'dist');
+
+app.use(express.static(distPath));
+
+// Health check endpoint for Render monitoring
+app.get('/healthz', (req, res) => {
+  res.status(200).json({ status: 'healthy', uptime: process.uptime() });
+});
+
+// Single Page Application (SPA) catch-all
+app.get('*', (req, res) => {
+  res.sendFile(path.join(distPath, 'index.html'));
+});
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(\`🚀 Production server running on http://0.0.0.0:\${PORT}\`);
+});`,
+  },
+  {
+    name: 'render.yaml',
+    path: 'render.yaml',
+    language: 'yaml',
+    category: 'Setup & Config',
+    description: 'Render Blueprint configuration for instant 1-click cloud deployment',
+    content: `# Render Blueprint Configuration (render.yaml)
+services:
+  - type: web
+    name: student-grade-viewer
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000`,
+  },
+  {
     name: 'index.html',
     path: 'index.html',
     language: 'html',
